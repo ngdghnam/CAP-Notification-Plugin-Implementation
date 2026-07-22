@@ -1,0 +1,23 @@
+# SAP Piper Shared Library pipeline config
+# Ref: https://github.com/SAP/jenkins-library/blob/master/resources/default_pipeline_environment.yml
+general:
+    buildTool: "mta"
+service:
+    buildToolVersion: "MBTJ11N20"
+stages:
+    Build:
+        mavenExecuteStaticCodeChecks: false
+        npmExecuteLint: true
+steps:
+    artifactPrepareVersion:
+        versioningType: "cloud_noTag"
+    npmExecuteLint:
+        failOnError: true
+    mtaBuild:
+        dockerOptions: "--env HOME=/tmp/mta"
+        buildTarget: "CF"
+        mtaFilePath: "mta_archives/cnma_carshop_1.0.0.mtar"
+        mtarName: "cnma_carshop_1.0.0.mtar"
+        dockerImage: devxci/mbtci-java11-node20
+    piperStageWrapper:
+        projectExtensionsDirectory: ".pipeline/extensions/"

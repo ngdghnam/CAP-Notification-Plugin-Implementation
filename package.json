@@ -4,9 +4,10 @@
     "@cap-js/cds-types": "^0.16.0",
     "@cap-js/sqlite": "^3.0.2",
     "@types/node": "^24.0.0",
+    "concurrently": "^10.0.3",
+    "rimraf": "^5",
     "tsx": "^4",
-    "typescript": "^5",
-    "rimraf": "^5"
+    "typescript": "^5"
   },
   "imports": {
     "#cds-models/*": "./@cds-models/*/index.js"
@@ -15,6 +16,7 @@
     "start": "cds-serve",
     "watch": "cds watch",
     "dev": "cds watch",
+    "dev:all": "concurrently -n \"BE,FE\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run dev\" \"npm run dev --prefix app/cnma_carshop_ui\"",
     "idev": "npm i --include=dev",
     "clean": "rimraf gen mta_archives ui_resources .cnma_carshop_mta_build_tmp @cds-models",
     "build": "cds build --production",
@@ -31,7 +33,8 @@
     "deploy:app": "npm run clean && mbt module-build -m=cnma_carshop_ui_deployer -a -g && cf deploy -m cnma_carshop_ui_deployer",
     "cf:payg": "cf login -a https://api.cf.eu10.hana.ondemand.com",
     "cf:cpea": "cf login -a https://api.cf.eu10-004.hana.ondemand.com",
-    "psize": "ls -lh mta_archives/cnma_carshop_1.0.0.mtar"
+    "psize": "ls -lh mta_archives/cnma_carshop_1.0.0.mtar",
+    "deploy:sqlite": "cds deploy --to sqlite"
   },
   "dependencies": {
     "@cap-js/hana": "^3.0.1",
@@ -59,7 +62,10 @@
         }
       },
       "auth": {
-        "kind": "xsuaa"
+        "kind": "mocked",
+        "[production]": {
+          "kind": "xsuaa"
+        }
       }
     },
     "build": {

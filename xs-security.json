@@ -1,0 +1,54 @@
+{
+    "xsappname": "cnma-carshop",
+    "tenant-mode": "dedicated",
+    "scopes": [
+        {
+            "name": "$XSAPPNAME.CNMA_CARSHOP_READ",
+            "description": "Carshop: Read access"
+        },
+        {
+            "name": "$XSAPPNAME.CNMA_CARSHOP_WRITE",
+            "description": "Carshop: Write / manage access"
+        },
+        {
+            "name": "$XSAPPNAME.CNMA_CUST_ADMIN",
+            "description": "CNMA Customer Admin"
+        },
+        {
+            "name": "$XSAPPNAME.CNMA_CUST_SUPER_ADMIN",
+            "description": "CNMA Customer Super Admin"
+        }
+    ],
+    "foreign-scope-references": [],
+    "attributes": [],
+    "role-templates": [
+        {
+            "name": "CNMA_CARSHOP_USER",
+            "description": "Carshop User — read access",
+            "scope-references": [
+                "$XSAPPNAME.CNMA_CARSHOP_READ"
+            ],
+            "attribute-references": []
+        },
+        {
+            "name": "CNMA_CARSHOP_ADMIN",
+            "description": "Carshop Admin — full access",
+            "scope-references": [
+                "$XSAPPNAME.CNMA_CARSHOP_READ",
+                "$XSAPPNAME.CNMA_CARSHOP_WRITE"
+            ],
+            "attribute-references": []
+        }
+    ],
+    "oauth2-configuration": {
+        "redirect-uris": [
+            "https://*.applicationstudio.cloud.sap/**",
+            "https://*.cfapps.eu10.hana.ondemand.com/",
+            "https://*.cfapps.eu10-004.hana.ondemand.com/"
+        ],
+        "credential-types": [
+            "binding-secret",
+            "x509"
+        ]
+    }
+}

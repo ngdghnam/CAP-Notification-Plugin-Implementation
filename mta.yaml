@@ -1,0 +1,240 @@
+_schema-version: "3.1"
+ID: cnma_carshop
+version: 1.0.0
+description: "CNMA Carshop Service"
+parameters:
+    enable-parallel-deployments: true
+
+build-parameters:
+    before-all:
+        - builder: custom
+          commands:
+              - npm install
+              - npm run clean
+              - npm run build:ts
+              - npm run build
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = MODULE SPACE = = = = = = = = = = = = = = = = = = = = = = = = = = #
+modules:
+    # ------------------------------------------------------------
+    # (1) DB MODULE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_db
+      type: hdb
+      path: db
+      parameters:
+          buildpack: nodejs_buildpack
+          disk-quota: 512M
+          memory: 256M
+          no-route: true
+          no-start: true
+          tasks:
+              - name: hdi-deploy
+                command: npm run start-update
+      build-parameters:
+          builder: custom
+          commands: []
+          ignore: ["node_modules", "default-env.json"]
+      requires:
+          - name: cnma_carshop_hdi
+          - name: cnma_carshop_xsuaa
+
+    # ------------------------------------------------------------
+    # (2) SERVICE MODULE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_srv
+      type: nodejs
+      path: gen/srv
+      parameters:
+          buildpack: nodejs_buildpack
+          memory: 1024M
+          disk-quota: 2048M
+          stack: cflinuxfs4
+          env:
+              OPTIMIZE_MEMORY: true
+      build-parameters:
+          builder: custom
+          commands: []
+          ignore:
+              - node_modules
+              - default-env.json
+              - mta_archives
+              - db/node_modules
+              - app/node_modules
+              - app/dist
+              - docs
+              - .env
+              - .env.local
+      provides:
+          - name: srv-api
+            public: true
+            properties:
+                srv-url: ${default-url}
+      requires:
+          - name: cnma_carshop_hdi
+          - name: cnma_carshop_xsuaa
+          - name: cnma_carshop_destination
+          - name: cnma_carshop_connectivity
+          - name: cnma_carshop_applog
+          - name: cnma_carshop_alert_notification
+
+    # ------------------------------------------------------------
+    # (3) UI MODULE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_ui
+      type: html5
+      path: app
+      requires:
+          - name: cnma_carshop_destination
+      build-parameters:
+          ignore: [".dev", "node_modules", "default-env.json"]
+          build-result: dist
+          builder: custom
+          commands:
+              - npm install
+              - npm run build:cf
+          supported-platforms: []
+      parameters:
+          version: ${version}-${timestamp}
+
+    # ------------------------------------------------------------
+    # (4) UI DEPLOYER MODULE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_ui_deployer
+      type: com.sap.application.content
+      path: .
+      requires:
+          - name: cnma_carshop_html5_host
+            parameters:
+                content-target: true
+      build-parameters:
+          ignore: ["node_modules", "default-env.json"]
+          build-result: ui_resources
+          requires:
+              - artifacts:
+                    - cnma_carshop.zip
+                name: cnma_carshop_ui
+                target-path: ui_resources/
+
+    # ------------------------------------------------------------
+    # (5) DESTINATION CONTENT MODULE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_destination_content
+      type: com.sap.application.content
+      requires:
+          - name: cnma_carshop_xsuaa
+            parameters:
+                service-key:
+                    name: cnma_carshop_xsuaa_key
+          - name: cnma_carshop_html5_host
+            parameters:
+                service-key:
+                    name: cnma_carshop_html5_host_key
+          - name: cnma_carshop_destination
+            parameters:
+                content-target: true
+          - name: cnma_carshop_connectivity
+      parameters:
+          content:
+              instance:
+                  existing_destinations_policy: update
+                  destinations:
+                      - Name: cnma_carshop_html5_dest
+                        ServiceInstanceName: cnma_carshop_html5_host
+                        ServiceKeyName: cnma_carshop_html5_host_key
+                        sap.cloud.service: cnma.carshop
+
+                      - Name: cnma_carshop_xsuaa_dest
+                        Authentication: OAuth2UserTokenExchange
+                        ServiceInstanceName: cnma_carshop_xsuaa
+                        ServiceKeyName: cnma_carshop_xsuaa_key
+                        sap.cloud.service: cnma.carshop
+      build-parameters:
+          no-source: true
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = RESOURCE SPACE = = = = = = = = = = = = = = = = = = = = = = = = = = #
+resources:
+    # ------------------------------------------------------------
+    # (1) HDI CONTAINER INSTANCE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_hdi
+      type: com.sap.xs.hdi-container
+      properties:
+          hdi-container-name: "${service-name}"
+      parameters:
+          service: hana
+          service-plan: hdi-shared
+
+    # ------------------------------------------------------------
+    # (2) XSUAA RESOURCE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_xsuaa
+      type: org.cloudfoundry.managed-service
+      parameters:
+          path: ./xs-security.json
+          service: xsuaa
+          service-plan: application
+
+    # ------------------------------------------------------------
+    # (2.1) ALERT NOTIFICATION
+    # ------------------------------------------------------------
+    - name: cnma_carshop_alert_notification
+      type: org.cloudfoundry.existing-service
+      parameters:
+          service-name: cnma_internallunchorder_alert_notification
+
+    # ------------------------------------------------------------
+    # (3) HTML5 APP REPOSITORY
+    # ------------------------------------------------------------
+    - name: cnma_carshop_html5_host
+      type: org.cloudfoundry.managed-service
+      parameters:
+          service: html5-apps-repo
+          service-plan: app-host
+
+    # ------------------------------------------------------------
+    # (N-2) APPLICATION LOGGING
+    # ------------------------------------------------------------
+    - name: cnma_carshop_applog
+      type: org.cloudfoundry.managed-service
+      parameters:
+          service-name: cnma_carshop_applog
+          service: application-logs
+          service-plan: lite
+
+    # ------------------------------------------------------------
+    # (N-1) CONNECTIVITY
+    # ------------------------------------------------------------
+    - name: cnma_carshop_connectivity
+      type: org.cloudfoundry.managed-service
+      parameters:
+          service: connectivity
+          service-plan: lite
+
+    # ------------------------------------------------------------
+    # (N) DESTINATION SERVICE
+    # ------------------------------------------------------------
+    - name: cnma_carshop_destination
+      type: org.cloudfoundry.managed-service
+      requires:
+          - name: srv-api
+      parameters:
+          service-plan: lite
+          service: destination
+          forwardAuthToken: true
+          config:
+              forwardAuthToken: true
+              HTML5Runtime_enabled: true
+              init_data:
+                  instance:
+                      existing_destinations_policy: ignore
+                      destinations:
+                          - Name: cnma_carshop_srv_dest
+                            Authentication: NoAuthentication
+                            Description: CNMA Carshop Service Backend
+                            ProxyType: Internet
+                            Type: HTTP
+                            URL: ~{srv-api/srv-url}
+                            HTML5.DynamicDestination: true
+                            HTML5.ForwardAuthToken: true
+                            HTML5.Timeout: 600000
