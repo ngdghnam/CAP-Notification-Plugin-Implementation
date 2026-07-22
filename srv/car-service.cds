@@ -3,7 +3,7 @@ using {cnma.carshop as db} from '../db/schema';
 service CARSHOP_SRV @(path: 'api/cnma/CARSHOP_SRV') {
 
     // Expose API
-    entity User    as projection on db.User;
+    entity AppUser    as projection on db.AppUser;
     entity Car     as projection on db.Car;
     entity Brand   as projection on db.Brand;
     entity Inquiry as projection on db.Inquiry;

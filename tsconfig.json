@@ -21,6 +21,7 @@
   "exclude": [
     "app",
     "node_modules",
-    "dist"
+    "dist",
+    "@cds-models"
   ]
 }
