@@ -22,7 +22,7 @@ type UserType      : String enum {
     SELLER
 }
 
-entity User : cuid, managed {
+entity AppUser : cuid, managed {
     name        : String;
     email       : String;
     phoneNumber : String;
@@ -48,7 +48,7 @@ entity Brand : cuid, managed {
 
 entity Inquiry : cuid, managed {
 
-    customer    : Association to one User;
+    customer    : Association to one AppUser;
 
     car         : Association to one Car;
 
