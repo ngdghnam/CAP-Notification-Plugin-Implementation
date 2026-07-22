@@ -2,19 +2,41 @@
   "devDependencies": {
     "@cap-js/cds-typer": ">=0.1",
     "@cap-js/cds-types": "^0.16.0",
+    "@cap-js/sqlite": "^3.0.2",
     "@types/node": "^24.0.0",
     "tsx": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "rimraf": "^5"
   },
   "imports": {
     "#cds-models/*": "./@cds-models/*/index.js"
   },
   "scripts": {
     "start": "cds-serve",
-    "watch": "cds watch"
+    "watch": "cds watch",
+    "dev": "cds watch",
+    "idev": "npm i --include=dev",
+    "clean": "rimraf gen mta_archives ui_resources .cnma_carshop_mta_build_tmp @cds-models",
+    "build": "cds build --production",
+    "build:ts": "echo 'Compiling TypeScript...' && tsc",
+    "build:db": "cds build --production",
+    "build:srv": "mbt module-build -m=cnma_carshop_srv -t mta_archives",
+    "build:cf": "npm run clean && npm run build:ts && npm run build && mbt build --mtar cnma_carshop_1.0.0.mtar",
+    "deploy": "cf deploy mta_archives/cnma_carshop_1.0.0.mtar --retries 1",
+    "deploy:cf": "npm run build:cf && npm run deploy",
+    "deploy:payg": "npm run clean && mbt build && cf deploy mta_archives/cnma_carshop_1.0.0.mtar --retries 1 -e .deploycfg/payg.mtaext",
+    "deploy:cpea": "npm run clean && mbt build && cf deploy mta_archives/cnma_carshop_1.0.0.mtar --retries 1 -e .deploycfg/cpea.mtaext",
+    "deploy:db": "npm run build:db && cds deploy --to hana",
+    "deploy:srv": "npm run build:srv && cf deploy mta_archives/cnma_carshop_1.0.0.mtar -m=cnma_carshop_srv",
+    "deploy:app": "npm run clean && mbt module-build -m=cnma_carshop_ui_deployer -a -g && cf deploy -m cnma_carshop_ui_deployer",
+    "cf:payg": "cf login -a https://api.cf.eu10.hana.ondemand.com",
+    "cf:cpea": "cf login -a https://api.cf.eu10-004.hana.ondemand.com",
+    "psize": "ls -lh mta_archives/cnma_carshop_1.0.0.mtar"
   },
   "dependencies": {
-    "@cap-js/notifications": "^0.3.0"
+    "@cap-js/hana": "^3.0.1",
+    "@cap-js/notifications": "^0.3.0",
+    "@cnma/cap-identity": "^1.0.25"
   },
   "cds": {
     "requires": {
@@ -23,8 +45,86 @@
         "types": "srv/notification-types.json"
       },
       "db": {
-        
+        "[development]": {
+          "kind": "sqlite",
+          "impl": "@cap-js/sqlite",
+          "credentials": {
+            "url": "db.sqlite"
+          }
+        },
+        "[production]": {
+          "kind": "hana",
+          "impl": "@cap-js/hana",
+          "deploy-format": "hdbtable"
+        }
+      },
+      "auth": {
+        "kind": "xsuaa"
       }
+    },
+    "build": {
+      "[node!]": {
+        "target": "gen",
+        "tasks": [
+          {
+            "for": "nodejs"
+          },
+          {
+            "for": "typescript"
+          },
+          {
+            "for": "hana"
+          }
+        ]
+      },
+      "[hana]": {
+        "target": "gen",
+        "tasks": [
+          {
+            "for": "hana"
+          }
+        ]
+      }
+    },
+    "hana": {
+      "syntax": "hdi",
+      "deploy-format": "hdbtable",
+      "journal": {
+        "enable-drop": false,
+        "change-mode": "alter"
+      }
+    },
+    "odata": {
+      "version": "v4"
+    },
+    "features": {
+      "vector": true
+    },
+    "model": [
+      "db",
+      "srv"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "env": {
+      "es2020": true,
+      "node": true
+    },
+    "globals": {
+      "SELECT": true,
+      "INSERT": true,
+      "UPDATE": true,
+      "DELETE": true,
+      "CREATE": true,
+      "DROP": true,
+      "CDL": true,
+      "CQL": true,
+      "CXL": true,
+      "cds": true
+    },
+    "rules": {
+      "no-console": "off"
     }
   }
 }
