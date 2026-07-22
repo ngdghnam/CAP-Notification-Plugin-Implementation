@@ -1,6 +1,5 @@
 using {cnma.carshop as db} from '../db/schema';
 
-
 service CARSHOP_SRV @(path: 'api/cnma/CARSHOP_SRV') {
 
     // Expose API
@@ -12,17 +11,22 @@ service CARSHOP_SRV @(path: 'api/cnma/CARSHOP_SRV') {
     // Create Sent Event
     @description                : 'Sent when a car inquiry is created'
     @notification               : {
-        template: {
+        template        : {
             title       : 'Car Inquiry: {{title}}',
             publicTitle : 'New Car Inquiry',
             subtitle    : '{{customerName}} submitted inquiry for {{carName}}',
             groupedTitle: 'Carshop Updates',
             email       : {
-                subject : '{i18n>EMAIL_TITLE}',
-                html    : './templates/inquiry-created.html'
+                subject: '{i18n>EMAIL_TITLE}',
+                html   : './templates/inquiry-created.html'
             }
         },
-        deliveryChannels: [{ channel: #Mail, enabled: true, defaultPreference: true, editablePreference: true }]
+        deliveryChannels: [{
+            channel           : #Mail,
+            enabled           : true,
+            defaultPreference : true,
+            editablePreference: true
+        }]
     }
     @Common.SemanticObject      : 'Inquiry'
     @Common.SemanticObjectAction: 'display'
