@@ -1,4 +1,6 @@
 @cds-models
 node_modules
 .npmrc
-*.sqlite
+db.sqlite
+db.sqlite-shm
+db.sqlite-wal

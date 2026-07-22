@@ -179,10 +179,9 @@ resources:
     # (2.1) ALERT NOTIFICATION
     # ------------------------------------------------------------
     - name: cnma_carshop_alert_notification
-      type: org.cloudfoundry.managed-service
+      type: org.cloudfoundry.existing-service
       parameters:
-          service: alert-notification
-          service-plan: standard
+          service-name: cnma_internallunchorder_alert_notification
 
     # ------------------------------------------------------------
     # (3) HTML5 APP REPOSITORY
