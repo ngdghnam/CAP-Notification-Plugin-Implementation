@@ -1,0 +1,30 @@
+{
+  "devDependencies": {
+    "@cap-js/cds-typer": ">=0.1",
+    "@cap-js/cds-types": "^0.16.0",
+    "@types/node": "^24.0.0",
+    "tsx": "^4",
+    "typescript": "^5"
+  },
+  "imports": {
+    "#cds-models/*": "./@cds-models/*/index.js"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "watch": "cds watch"
+  },
+  "dependencies": {
+    "@cap-js/notifications": "^0.3.0"
+  },
+  "cds": {
+    "requires": {
+      "notifications": {
+        "outbox": false,
+        "types": "srv/notification-types.json"
+      },
+      "db": {
+        
+      }
+    }
+  }
+}
