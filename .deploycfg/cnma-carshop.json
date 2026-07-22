@@ -1,0 +1,14 @@
+{
+  "destination": {
+    "Authentication": "NoAuthentication",
+    "Description": "CNMA Carshop Service",
+    "HTML5.DynamicDestination": "true",
+    "HTML5.ForwardAuthToken": "true",
+    "HTML5.Timeout": "600000",
+    "Name": "cnma-carshop",
+    "ProxyType": "Internet",
+    "Type": "HTTP",
+    "URL": "space_app_url",
+    "URL.headers.Authorization": "Bearer space_app_token"
+  }
+}
