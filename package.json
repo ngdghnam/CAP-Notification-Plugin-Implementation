@@ -69,6 +69,11 @@
         "[production]": {
           "kind": "xsuaa"
         }
+      },
+      "cnma_internallunchorder_alert_notification": {
+        "vcap": {
+          "name": "cnma_internallunchorder_alert_notification"
+        }
       }
     },
     "build": {
