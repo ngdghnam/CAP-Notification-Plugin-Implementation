@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "NotificationTypeKey": "cap_upgrade_plugins/InquiryOrdered",
+    "NotificationTypeVersion": "1",
+    "Templates": [
+      {
+        "Language": "en",
+        "TemplatePublic": "New Car Inquiry",
+        "TemplateSensitive": "Car Inquiry: {{title}}",
+        "TemplateGrouped": "Carshop Updates",
+        "Subtitle": "{{customerName}} submitted inquiry for {{carName}}"
+      }
+    ]
+  }
+]

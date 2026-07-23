@@ -22,6 +22,7 @@
     "app",
     "node_modules",
     "dist",
+    "gen",
     "@cds-models"
   ]
 }

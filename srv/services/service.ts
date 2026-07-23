@@ -65,4 +65,45 @@ export class CarShopService {
         }
         return `INQ-${maxNumber + 1}`
     }
+
+    /**
+     * Process and send the inquiry notification
+     */
+    async processInquiryNotification(srv: cds.Service, req: cds.Request, data: any) {
+        // Re-fetch the full inquiry inside the same transaction to ensure we get
+        // generated fields (like number) and can expand associations correctly.
+        const { Inquiry } = srv.entities;
+        const fullInquiry = await cds.tx(req).run(
+            SELECT.one.from(Inquiry).where({ ID: data.ID }).columns((i: any) => {
+                i.ID;
+                i.title;
+                i.message;
+                i.description;
+                i.number;
+                i.customer((c: any) => c.name);
+                i.car((c: any) => c.name);
+            })
+        );
+
+        const customerName = fullInquiry?.customer?.name || data.customer?.name || req.user?.id || "anonymous";
+        const carName = fullInquiry?.car?.name || data.car?.name || "Unknown Car";
+        const number = fullInquiry?.number || data.number || "";
+        const title = fullInquiry?.title || data.title || "New Car Inquiry";
+        const message = fullInquiry?.message || data.message || "";
+        const description = fullInquiry?.description || data.description || "A customer has submitted a new inquiry.";
+
+        const recipients = data.recipients || ["stghoainam4002@gmail.com", "nam.nguyen@conarum.com"];
+
+        return this.sendInquiryNotification(
+            recipients,
+            {
+                title,
+                message,
+                description,
+                number,
+                customerName,
+                carName
+            }
+        );
+    }
 }

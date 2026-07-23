@@ -4,6 +4,7 @@
     "@cap-js/cds-types": "^0.16.0",
     "@cap-js/sqlite": "^3.0.2",
     "@types/node": "^24.0.0",
+    "cds-swagger-ui-express": "^0.11.0",
     "concurrently": "^10.0.3",
     "rimraf": "^5",
     "tsx": "^4",
@@ -34,12 +35,14 @@
     "cf:payg": "cf login -a https://api.cf.eu10.hana.ondemand.com",
     "cf:cpea": "cf login -a https://api.cf.eu10-004.hana.ondemand.com",
     "psize": "ls -lh mta_archives/cnma_carshop_1.0.0.mtar",
-    "deploy:sqlite": "cds deploy --to sqlite"
+    "deploy:sqlite": "cds deploy --to sqlite",
+    "start:hybrid:backend": "cds watch --profile hybrid"
   },
   "dependencies": {
     "@cap-js/hana": "^3.0.1",
     "@cap-js/notifications": "^0.3.0",
-    "@cnma/cap-identity": "^1.0.25"
+    "@cnma/cap-identity": "^1.0.25",
+    "@sap_oss/alert-notification-client": "^1.14.0"
   },
   "cds": {
     "requires": {
@@ -48,16 +51,16 @@
         "types": "srv/notification-types.json"
       },
       "db": {
-        "[development]": {
-          "kind": "sqlite",
-          "impl": "@cap-js/sqlite",
-          "credentials": {
-            "url": "db.sqlite"
-          }
+        "kind": "sqlite",
+        "credentials": {
+          "url": "db.sqlite"
         },
         "[production]": {
           "kind": "hana",
-          "impl": "@cap-js/hana",
+          "deploy-format": "hdbtable"
+        },
+        "[hybrid]": {
+          "kind": "hana",
           "deploy-format": "hdbtable"
         }
       },
