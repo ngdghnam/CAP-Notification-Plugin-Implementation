@@ -25,8 +25,9 @@ export class CarShopService {
                         creds = alertServices[0].credentials;
                     } else {
                         // Thử tìm theo tên instance
+                        const ansServiceName = process.env.ANS_SERVICE_NAME || "alert-notification";
                         for (const key of Object.keys(vcap)) {
-                            const found = vcap[key].find((s: any) => s.name === "cnma_internallunchorder_alert_notification" || s.label === "alert-notification");
+                            const found = vcap[key].find((s: any) => s.name === ansServiceName || s.label === "alert-notification");
                             if (found) creds = found.credentials;
                         }
                     }
@@ -37,26 +38,25 @@ export class CarShopService {
 
             // 2. Fallback lấy từ cấu hình mà CAP đã bind (có thể bị CAP đổi tên uaa.url)
             if (!creds) {
-                const ansService = cds.env.requires?.["cnma_internallunchorder_alert_notification"] || cds.env.requires?.["alert-notification"];
+                const ansServiceName = process.env.ANS_SERVICE_NAME || "alert-notification";
+                const ansService = cds.env.requires?.[ansServiceName] || cds.env.requires?.["alert-notification"];
                 if (ansService && ansService.credentials) {
                     creds = ansService.credentials;
                 }
             }
             
             if (creds) {
-                console.log("==> CREDS OBJECT:", creds);
+                const oauthPath = process.env.ANS_OAUTH_PATH || "";
                 this.ansClient = new AlertNotificationClient({
                     authentication: new OAuthAuthentication({
                         username: creds.client_id || creds.clientid || creds.uaa?.clientid,
                         password: creds.client_secret || creds.clientsecret || creds.uaa?.clientsecret,
-                        oAuthTokenUrl: creds.oauth_url || (creds.uaa ? creds.uaa.url + "/oauth/token?grant_type=client_credentials" : "")
+                        oAuthTokenUrl: creds.oauth_url || (creds.uaa ? creds.uaa.url + oauthPath : "")
                     }),
                     region: RegionUtils.EU10
                 });
-
-                // console.log("ansClient: ", this.ansClient)
             } else {
-                throw new Error("Alert Notification service credentials not found! Vui lòng Ctrl+C tắt server hiện tại và chạy lại lệnh 'npm run start:hybrid:backend'.");
+                throw new Error("Alert Notification service credentials not found in VCAP_SERVICES or CAP bindings.");
             }
         }
         return this.ansClient;
@@ -188,17 +188,15 @@ export class CarShopService {
             })
         );
 
-        console.log("==> fullInquiry fetched:", JSON.stringify(fullInquiry, null, 2));
-        console.log("==> req data:", JSON.stringify(record, null, 2));
+        const customerName = fullInquiry?.customer?.name ?? record.customer?.name ?? req.user?.id ?? "anonymous";
+        const carName = fullInquiry?.car?.name ?? record.car?.name ?? "Unknown Car";
+        const number = fullInquiry?.number ?? record.number ?? "";
+        const title = fullInquiry?.title ?? record.title ?? "New Car Inquiry";
+        const message = fullInquiry?.message ?? record.message ?? "";
+        const description = fullInquiry?.description ?? record.description ?? "A customer has submitted a new inquiry.";
 
-        const customerName = fullInquiry?.customer?.name || record.customer?.name || req.user?.id || "anonymous";
-        const carName = fullInquiry?.car?.name || record.car?.name || "Unknown Car";
-        const number = fullInquiry?.number || record.number || "";
-        const title = fullInquiry?.title || record.title || "New Car Inquiry";
-        const message = fullInquiry?.message || record.message || "";
-        const description = fullInquiry?.description || record.description || "A customer has submitted a new inquiry.";
-
-        const recipients = record.recipients || ["stghoainam4002@gmail.com", "nam.nguyen@conarum.com"];
+        const defaultRecipients = process.env.ANS_DEFAULT_RECIPIENTS ? process.env.ANS_DEFAULT_RECIPIENTS.split(",") : [];
+        const recipients = record.recipients || defaultRecipients;
 
         const notificationData = {
             title,
@@ -210,8 +208,7 @@ export class CarShopService {
         };
 
         // Tuỳ chọn: dùng ANS thay vì Fiori Notification
-        const useANS = true; 
-
+        // const useANS = true; 
         // if (useANS) {
         // } else {
         //     return this.sendInquiryNotification(recipients, notificationData);
