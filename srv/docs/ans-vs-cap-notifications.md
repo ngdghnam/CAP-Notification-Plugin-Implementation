@@ -44,3 +44,34 @@ In the SAP CAP ecosystem, there are two primary notification mechanisms, each se
 ### Summary Recommendation
 - If the requirement is: *"Notify the user inside the Fiori Launchpad when a new form is assigned to them,"* ➡️ Use **`@cap-js/notifications`**.
 - If the requirement is: *"Send a beautifully formatted confirmation email to a customer and notify the IT team via Slack when a system fails,"* ➡️ Use **`@sap_oss/alert-notification-client` (ANS)**.
+
+---
+
+## 4. Example Use Cases for SAP Alert Notification Service
+
+To better understand when and how to utilize the `@sap_oss/alert-notification-client`, here are a few real-world implementation scenarios:
+
+### Use Case A: B2B/B2C Multi-Channel Customer Communication
+**Scenario**: A customer submits a high-priority "Inquiry" form on your SAP BTP portal. 
+**ANS Implementation**:
+- The backend CAP service instantly emits an `InquiryOrdered` event.
+- **Action 1 (Email)**: ANS is configured to send a branded confirmation HTML email to the customer's email address.
+- **Action 2 (MS Teams)**: ANS simultaneously sends a webhook payload to a dedicated Microsoft Teams channel for the Sales team, displaying the details of the inquiry in an Adaptive Card format.
+**Why ANS?** It prevents the backend code from being bloated with SMTP mailer setups, Microsoft Graph API integrations, and complex formatting logic.
+
+### Use Case B: System Error & DevOps Alerting
+**Scenario**: Your backend process fails to synchronize data with a third-party API or S/4HANA backend due to an authentication error.
+**ANS Implementation**:
+- Your CAP application catches the `401 Unauthorized` exception.
+- It uses `@sap_oss/alert-notification-client` to emit a `SystemError` event with `severity = FATAL`.
+- **Action 1 (Slack)**: ANS routes the event directly to the `#devops-alerts` Slack channel.
+- **Action 2 (ServiceNow)**: ANS triggers an automated ticket creation in ServiceNow via webhook.
+**Why ANS?** It provides a unified funnel for system health monitoring, routing critical errors to on-call developers instantly.
+
+### Use Case C: Long-running Batch Job Notifications
+**Scenario**: A nightly background job processes thousands of database records and generates a report.
+**ANS Implementation**:
+- The Node.js worker finishes the batch job and computes a summary (e.g., "100 processed, 5 failed").
+- It sends a `BatchJobCompleted` event to ANS.
+- **Action (Email)**: ANS sends the summary report to the administrator mailing list.
+**Why ANS?** Long-running processes shouldn't rely on the user keeping their browser open. ANS guarantees the delivery of asynchronous completion messages without UI coupling.
